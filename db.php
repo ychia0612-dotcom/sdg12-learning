@@ -23,12 +23,12 @@ try {
     $conn->set_charset("utf8mb4");
 
     // 建立必要資料表
-    // 使用者表
+    // 使用者表 - 移除email唯一約束，添加恢復碼欄位
     $conn->query("CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(50) NOT NULL UNIQUE,
-        email VARCHAR(100) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
+        recovery_code VARCHAR(255) NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_login TIMESTAMP NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
