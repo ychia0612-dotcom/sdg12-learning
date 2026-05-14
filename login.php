@@ -1,6 +1,7 @@
 <?php
 session_start();
-include 'db.php';
+// 使用include_once避免重複包含
+include_once 'db.php';
 
 $error = '';
 
@@ -11,36 +12,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (empty($username) || empty($password)) {
         $error = "請輸入使用者名稱和密碼";
     } else {
-        $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE username = ?");
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows == 1) {
-            $user = $result->fetch_assoc();
-            if (password_verify($password, $user['password'])) {
-                // 登入成功
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
-                
-                // 更新最後登入時間
-                $stmt = $conn->prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?");
-                $stmt->bind_param("i", $user['id']);
-                $stmt->execute();
-                
-                header("Location: user.php");
-                exit();
-            } else {
-                $error = "密碼錯誤";
-            }
+        // 檢查資料庫連線是否成功
+        if (!$conn) {
+            $error = "系統暫時無法登入，請稍後再試";
         } else {
-            $error = "使用者名稱不存在";
+            $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE username = ?");
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows == 1) {
+                $user = $result->fetch_assoc();
+                if (password_verify($password, $user['password'])) {
+                    // 登入成功
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['username'] = $user['username'];
+                    
+                    // 更新最後登入時間
+                    $stmt = $conn->prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?");
+                    $stmt->bind_param("i", $user['id']);
+                    $stmt->execute();
+                    
+                    header("Location: user.php");
+                    exit();
+                } else {
+                    $error = "密碼錯誤";
+                }
+            } else {
+                $error = "使用者名稱不存在";
+            }
+            $stmt->close();
         }
-        $stmt->close();
     }
 }
-
-close_db();
 ?>
 <!DOCTYPE html>
 <html lang="zh-TW">
