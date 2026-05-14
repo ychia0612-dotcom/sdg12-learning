@@ -10,6 +10,27 @@ $user = $parts['user'];
 $pass = isset($parts['pass']) ? $parts['pass'] : '';
 $dbname = ltrim($parts['path'], '/');
 
+// 全局連線變數
+$conn = null;
+
+// 提前定義所有函數，確保無論連線是否成功都存在
+function get_total_visits() {
+    global $conn;
+    if (!$conn) {
+        return "暫無法統計";
+    }
+    $result = $conn->query("SELECT total_visits FROM visitor_count LIMIT 1");
+    $row = $result->fetch_assoc();
+    return $row['total_visits'];
+}
+
+function close_db() {
+    global $conn;
+    if ($conn) {
+        $conn->close();
+    }
+}
+
 // 建立連線 - 增加錯誤處理避免致命錯誤
 try {
     $conn = new mysqli($host, $user, $pass, $dbname, $port);
@@ -49,31 +70,9 @@ try {
     // 增加訪問次數
     $conn->query("UPDATE visitor_count SET total_visits = total_visits + 1");
 
-    // 取得總訪問人次
-    function get_total_visits() {
-        global $conn;
-        $result = $conn->query("SELECT total_visits FROM visitor_count LIMIT 1");
-        $row = $result->fetch_assoc();
-        return $row['total_visits'];
-    }
-
-    // 關閉連線函數
-    function close_db() {
-        global $conn;
-        $conn->close();
-    }
-
 } catch (Exception $e) {
     // 資料庫連線失敗時的優雅降級
     error_log("資料庫錯誤: " . $e->getMessage());
-    
-    // 定義空函數避免頁面出錯
-    function get_total_visits() {
-        return "暫無法統計";
-    }
-    
-    function close_db() {
-        // 空函數
-    }
+    $conn = null;
 }
 ?>
