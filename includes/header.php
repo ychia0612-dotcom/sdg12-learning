@@ -32,5 +32,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 />
             </svg>
         </a>
+        <?php if (isset($_SESSION['user_id'])): ?>
+            <a href="logout.php" class="btn-danger" style="margin-left: 15px; text-decoration: none;">登出</a>
+        <?php endif; ?>
     </div>
 </nav>
