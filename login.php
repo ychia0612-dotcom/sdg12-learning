@@ -111,6 +111,7 @@ close_db();
         .auth-link {
             text-align: center;
             color: #555;
+            line-height: 1.8;
         }
         .auth-link a {
             color: #C49A3A;
@@ -155,6 +156,7 @@ close_db();
             </form>
 
             <div class="auth-link">
+                忘記密碼？<a href="forgot_password.php">點此找回</a><br>
                 還沒有帳號？<a href="register.php">立即註冊</a>
             </div>
         </div>
