@@ -1,8 +1,3 @@
-<?php
-// 引入資料庫連線
-include 'db.php';
-?>
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
