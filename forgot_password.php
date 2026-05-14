@@ -1,5 +1,6 @@
 <?php
-include 'db.php';
+// 使用include_once避免重複包含
+include_once 'db.php';
 
 $error = '';
 $success = '';
@@ -15,22 +16,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (empty($username) || empty($recovery_code)) {
             $error = "請填寫所有欄位";
         } else {
-            // 查詢使用者
-            $stmt = $conn->prepare("SELECT id, recovery_code FROM users WHERE username = ?");
-            $stmt->bind_param("s", $username);
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            if ($result->num_rows == 0) {
-                $error = "使用者名稱不存在";
+            // 檢查資料庫連線是否成功
+            if (!$conn) {
+                $error = "系統暫時無法處理，請稍後再試";
             } else {
-                $user = $result->fetch_assoc();
-                
-                // 驗證恢復碼
-                if (password_verify($recovery_code, $user['recovery_code'])) {
-                    $show_reset_form = true;
+                // 查詢使用者
+                $stmt = $conn->prepare("SELECT id, recovery_code FROM users WHERE username = ?");
+                $stmt->bind_param("s", $username);
+                $stmt->execute();
+                $result = $stmt->get_result();
+
+                if ($result->num_rows == 0) {
+                    $error = "使用者名稱不存在";
                 } else {
-                    $error = "恢復碼錯誤";
+                    $user = $result->fetch_assoc();
+                    
+                    // 驗證恢復碼
+                    if (password_verify($recovery_code, $user['recovery_code'])) {
+                        $show_reset_form = true;
+                    } else {
+                        $error = "恢復碼錯誤";
+                    }
                 }
             }
         }
@@ -50,27 +56,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error = "密碼長度至少需要6個字元";
             $show_reset_form = true;
         } else {
-            // 生成新的恢復碼
-            $new_recovery_code = bin2hex(random_bytes(8));
-            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-            $hashed_recovery_code = password_hash($new_recovery_code, PASSWORD_DEFAULT);
-
-            // 更新密碼和恢復碼
-            $stmt = $conn->prepare("UPDATE users SET password = ?, recovery_code = ? WHERE username = ?");
-            $stmt->bind_param("sss", $hashed_password, $hashed_recovery_code, $username);
-
-            if ($stmt->execute()) {
-                $success = "密碼重置成功！請保存你的新恢復碼";
-                $recovery_code = $new_recovery_code;
-            } else {
-                $error = "密碼重置失敗，請稍後再試";
+            // 檢查資料庫連線是否成功
+            if (!$conn) {
+                $error = "系統暫時無法處理，請稍後再試";
                 $show_reset_form = true;
+            } else {
+                // 生成新的恢復碼
+                $new_recovery_code = bin2hex(random_bytes(8));
+                $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+                $hashed_recovery_code = password_hash($new_recovery_code, PASSWORD_DEFAULT);
+
+                // 更新密碼和恢復碼
+                $stmt = $conn->prepare("UPDATE users SET password = ?, recovery_code = ? WHERE username = ?");
+                $stmt->bind_param("sss", $hashed_password, $hashed_recovery_code, $username);
+
+                if ($stmt->execute()) {
+                    $success = "密碼重置成功！請保存你的新恢復碼";
+                    $recovery_code = $new_recovery_code;
+                } else {
+                    $error = "密碼重置失敗，請稍後再試";
+                    $show_reset_form = true;
+                }
             }
         }
     }
 }
-
-close_db();
 ?>
 
 <!DOCTYPE html>
