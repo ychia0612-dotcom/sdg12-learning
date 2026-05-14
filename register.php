@@ -1,6 +1,8 @@
 <?php
-// 使用include_once避免重複包含
-include_once 'db.php';
+session_start();
+// 使用絕對路徑避免重複包含問題
+define('ROOT_PATH', __DIR__);
+include_once ROOT_PATH . '/db.php';
 
 $error = '';
 $success = '';
@@ -46,9 +48,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if ($stmt->execute()) {
                     $success = "註冊成功！請務必保存以下恢復碼，忘記密碼時將無法找回帳號";
                 } else {
-                    $error = "註冊失敗，請稍後再試";
+                    $error = "註冊失敗，請稍後再試：" . $stmt->error;
                 }
+                $stmt->close();
             }
+            $stmt->close();
         }
     }
 }
@@ -185,21 +189,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </style>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include ROOT_PATH . '/includes/header.php'; ?>
 
     <div class="container">
         <div class="auth-container fade-in">
             <h2 class="auth-title">📝 註冊帳號</h2>
             
             <?php if (!empty($error)): ?>
-                <div class="error-message"><?php echo $error; ?></div>
+                <div class="error-message"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
 
             <?php if (!empty($success)): ?>
                 <div class="success-message">
-                    <?php echo $success; ?>
+                    <?php echo htmlspecialchars($success); ?>
                     <div class="recovery-code">
-                        <span id="recoveryCode"><?php echo $recovery_code; ?></span>
+                        <span id="recoveryCode"><?php echo htmlspecialchars($recovery_code); ?></span>
                         <button onclick="copyRecoveryCode()">複製</button>
                     </div>
                     <p class="warning">⚠️ 此恢復碼僅顯示一次，請立即複製並妥善保存</p>
@@ -229,13 +233,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include ROOT_PATH . '/includes/footer.php'; ?>
 
     <script>
         function copyRecoveryCode() {
             const code = document.getElementById('recoveryCode').textContent;
             navigator.clipboard.writeText(code).then(() => {
                 alert('恢復碼已複製到剪貼簿');
+            }).catch(() => {
+                alert('複製失敗，請手動複製');
             });
         }
     </script>
