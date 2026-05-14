@@ -1,4 +1,35 @@
 <?php
+// 網站基本設定
+define('SITE_NAME', 'SDG12 永續生活家');
+define('SITE_URL', ''); // 上線時填入您的網址
+define('SITE_YEAR', '2026');
+
+// 頁面標題對應
+$page_titles = [
+    'index' => 'SDG12 永續生活家',
+    'sdg12-intro' => '深入了解 SDG12',
+    'sdg12-quiz' => 'SDG12 知識測驗',
+    'user' => 'SDG12 永續生活家'
+];
+
+// 取得目前頁面名稱
+function get_current_page() {
+    $script = basename($_SERVER['SCRIPT_NAME'], '.php');
+    return $script;
+}
+
+// 取得頁面標題
+function get_page_title() {
+    global $page_titles;
+    $current_page = get_current_page();
+    return isset($page_titles[$current_page]) ? $page_titles[$current_page] : SITE_NAME;
+}
+
+// 判斷是否為目前頁面
+function is_active($page) {
+    return get_current_page() === $page ? 'active' : '';
+}
+
 // 資料庫連線設定 - 優先使用Railway環境變數，本機開發時使用預設值
 $url = getenv('DATABASE_URL') ?: "mysql://root:QMBBipAKqAvvSSFqsRAebVkqKEPYmZIg@yamanote.proxy.rlwy.net:13554/railway";
 
@@ -14,20 +45,27 @@ $dbname = ltrim($parts['path'], '/');
 $conn = null;
 
 // 提前定義所有函數，確保無論連線是否成功都存在
-function get_total_visits() {
-    global $conn;
-    if (!$conn) {
-        return "暫無法統計";
+if (!function_exists('get_total_visits')) {
+    function get_total_visits() {
+        global $conn;
+        if (!$conn) {
+            return "暫無法統計";
+        }
+        $result = $conn->query("SELECT total_visits FROM visitor_count LIMIT 1");
+        if (!$result) {
+            return "暫無法統計";
+        }
+        $row = $result->fetch_assoc();
+        return $row['total_visits'];
     }
-    $result = $conn->query("SELECT total_visits FROM visitor_count LIMIT 1");
-    $row = $result->fetch_assoc();
-    return $row['total_visits'];
 }
 
-function close_db() {
-    global $conn;
-    if ($conn) {
-        $conn->close();
+if (!function_exists('close_db')) {
+    function close_db() {
+        global $conn;
+        if ($conn) {
+            $conn->close();
+        }
     }
 }
 
