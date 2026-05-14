@@ -16,9 +16,10 @@
         <h1>歡迎來到<br><span>SDG12 永續生活家</span></h1>
         <p>每一個微小的日常選擇，都能成為改變世界的力量。<br>邀請您一起用實際行動打造一個零浪費的永續未來。</p>
         <div class="hero-cta">
-            <button class="btn-primary" onclick="location.href='user.php'">
-                ♻️ 立即開始學習
-            </button>
+            <button class="btn-primary" onclick="location.href='login.php'">
+        ♻️ 立即開始學習
+    </button>
+</div>
         </div>
     </div>
 
