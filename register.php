@@ -1,5 +1,6 @@
 <?php
-include 'db.php';
+// 使用include_once避免重複包含
+include_once 'db.php';
 
 $error = '';
 $success = '';
@@ -18,36 +19,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif (strlen($password) < 6) {
         $error = "密碼長度至少需要6個字元";
     } else {
-        // 檢查使用者名稱是否已存在
-        $stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-            $error = "使用者名稱已被使用";
+        // 檢查資料庫連線是否成功
+        if (!$conn) {
+            $error = "系統暫時無法註冊，請稍後再試";
         } else {
-            // 生成16位隨機恢復碼
-            $recovery_code = bin2hex(random_bytes(8));
-            
-            // 哈希密碼和恢復碼
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $hashed_recovery_code = password_hash($recovery_code, PASSWORD_DEFAULT);
+            // 檢查使用者名稱是否已存在
+            $stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
 
-            // 插入使用者
-            $stmt = $conn->prepare("INSERT INTO users (username, password, recovery_code) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $username, $hashed_password, $hashed_recovery_code);
-
-            if ($stmt->execute()) {
-                $success = "註冊成功！請務必保存以下恢復碼，忘記密碼時將無法找回帳號";
+            if ($result->num_rows > 0) {
+                $error = "使用者名稱已被使用";
             } else {
-                $error = "註冊失敗，請稍後再試";
+                // 生成16位隨機恢復碼
+                $recovery_code = bin2hex(random_bytes(8));
+                
+                // 哈希密碼和恢復碼
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $hashed_recovery_code = password_hash($recovery_code, PASSWORD_DEFAULT);
+
+                // 插入使用者
+                $stmt = $conn->prepare("INSERT INTO users (username, password, recovery_code) VALUES (?, ?, ?)");
+                $stmt->bind_param("sss", $username, $hashed_password, $hashed_recovery_code);
+
+                if ($stmt->execute()) {
+                    $success = "註冊成功！請務必保存以下恢復碼，忘記密碼時將無法找回帳號";
+                } else {
+                    $error = "註冊失敗，請稍後再試";
+                }
             }
         }
     }
 }
-
-close_db();
 ?>
 
 <!DOCTYPE html>
